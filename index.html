@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    >
+    <title>Weather Radar</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+    >
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <div id="map" aria-label="Weather radar map"></div>
+
+    <div id="status" class="status is-hidden" aria-live="polite"></div>
+    <div id="timestamp" class="timestamp">Loading radar...</div>
+
+    <div id="controls" class="controls">
+      <button id="playPauseButton" type="button">Play</button>
+      <button id="prevButton" type="button">Prev</button>
+      <button id="nextButton" type="button">Next</button>
+      <button id="refreshButton" type="button">Refresh</button>
+      <button id="locateButton" type="button">Locate Me</button>
+    </div>
+
+    <noscript>
+      <div class="noscript-message">
+        This page needs JavaScript enabled to load weather radar frames.
+      </div>
+    </noscript>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
