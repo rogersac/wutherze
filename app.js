@@ -7,7 +7,7 @@
   var RADAR_SMOOTHING = 1;
   var RADAR_SNOW = 1;
   var ANIMATION_DELAY = 900;
-  var CONTROLS_HIDE_DELAY = 10000;
+  var CONTROLS_HIDE_DELAY = 3000;
   var LOADING_MESSAGE = "Loading radar frames...";
 
   var map = null;
