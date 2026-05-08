@@ -1,3 +1,16 @@
+:root {
+  --app-bg: #0b1722;
+  --map-bg: #102235;
+  --panel-bg: rgba(7, 19, 30, 0.84);
+  --panel-text: #ffffff;
+  --panel-link: #d7ebff;
+  --button-bg: #e7eef7;
+  --button-text: #102235;
+  --button-active-bg: #c8d6e6;
+  --status-error-bg: rgba(117, 24, 24, 0.92);
+  --attribution-bg: rgba(255, 255, 255, 0.84);
+}
+
 html,
 body {
   height: 100%;
@@ -6,9 +19,22 @@ body {
 
 body {
   overflow: hidden;
-  background: #0b1722;
-  color: #ffffff;
+  background: var(--app-bg);
+  color: var(--panel-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.theme-light {
+  --app-bg: #edf3f9;
+  --map-bg: #cfdbe7;
+  --panel-bg: rgba(255, 255, 255, 0.88);
+  --panel-text: #102235;
+  --panel-link: #13517f;
+  --button-bg: #dde8f3;
+  --button-text: #102235;
+  --button-active-bg: #cbd9e7;
+  --status-error-bg: rgba(117, 24, 24, 0.92);
+  --attribution-bg: rgba(255, 255, 255, 0.9);
 }
 
 #map {
@@ -19,7 +45,7 @@ body {
   left: 0;
   height: 100%;
   width: 100%;
-  background: #102235;
+  background: var(--map-bg);
 }
 
 .timestamp,
@@ -36,7 +62,8 @@ body {
   left: 12px;
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(7, 19, 30, 0.78);
+  background: var(--panel-bg);
+  color: var(--panel-text);
   font-size: 16px;
   line-height: 1.2;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
@@ -48,8 +75,8 @@ body {
   max-width: calc(100% - 32px);
   padding: 10px 14px;
   border-radius: 12px;
-  background: rgba(7, 19, 30, 0.92);
-  color: #ffffff;
+  background: var(--panel-bg);
+  color: var(--panel-text);
   font-size: 16px;
   text-align: center;
   transform: translateX(-50%);
@@ -57,7 +84,8 @@ body {
 }
 
 .status.is-error {
-  background: rgba(117, 24, 24, 0.92);
+  background: var(--status-error-bg);
+  color: #ffffff;
 }
 
 .controls {
@@ -69,7 +97,7 @@ body {
   justify-content: center;
   padding: 10px;
   border-radius: 16px;
-  background: rgba(7, 19, 30, 0.84);
+  background: var(--panel-bg);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
   transition: opacity 0.25s ease;
 }
@@ -84,13 +112,14 @@ body {
   right: 12px;
   padding: 8px 12px;
   border-radius: 12px;
-  background: rgba(7, 19, 30, 0.78);
+  background: var(--panel-bg);
+  color: var(--panel-text);
   font-size: 13px;
   line-height: 1.2;
 }
 
 .source-attribution a {
-  color: #d7ebff;
+  color: var(--panel-link);
 }
 
 .controls button {
@@ -100,14 +129,14 @@ body {
   padding: 0 10px;
   border: 0;
   border-radius: 12px;
-  background: #e7eef7;
-  color: #102235;
+  background: var(--button-bg);
+  color: var(--button-text);
   font-size: 18px;
   font-weight: 600;
 }
 
 .controls button:active {
-  background: #c8d6e6;
+  background: var(--button-active-bg);
 }
 
 .is-hidden {
@@ -133,7 +162,7 @@ body {
 }
 
 .leaflet-control-attribution {
-  background: rgba(255, 255, 255, 0.84);
+  background: var(--attribution-bg);
 }
 
 .leaflet-bottom.leaflet-right {

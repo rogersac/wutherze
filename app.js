@@ -10,8 +10,10 @@
   var CONTROLS_HIDE_DELAY = 3000;
   var AUTO_REFRESH_INTERVAL = 120000;
   var LOADING_MESSAGE = "Loading radar frames...";
+  var DARK_TINT_OPACITY = 0.4;
 
   var map = null;
+  var baseTintLayer = null;
   var currentLayer = null;
   var pendingLayer = null;
   var frames = [];
@@ -30,8 +32,14 @@
   var nextButton = document.getElementById("nextButton");
   var refreshButton = document.getElementById("refreshButton");
   var locateButton = document.getElementById("locateButton");
+  var themeButton = document.getElementById("themeButton");
+  var currentTheme = "dark";
 
   function initMap() {
+    var basePane = null;
+    var tintPane = null;
+    var radarPane = null;
+
     map = L.map("map", {
       maxZoom: 12,
       zoomControl: true,
@@ -40,10 +48,30 @@
 
     map.setView(DEFAULT_CENTER, DEFAULT_ZOOM);
 
+    basePane = map.createPane("basePane");
+    basePane.style.zIndex = 200;
+
+    tintPane = map.createPane("tintPane");
+    tintPane.style.zIndex = 300;
+    tintPane.style.pointerEvents = "none";
+
+    radarPane = map.createPane("radarPane");
+    radarPane.style.zIndex = 500;
+
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
         '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      pane: "basePane",
       maxZoom: 18
+    }).addTo(map);
+
+    baseTintLayer = L.rectangle([[-85, -180], [85, 180]], {
+      stroke: false,
+      fill: true,
+      fillColor: "#07111a",
+      fillOpacity: 0,
+      interactive: false,
+      pane: "tintPane"
     }).addTo(map);
   }
 
@@ -80,9 +108,41 @@
       noteActivity();
     };
 
+    themeButton.onclick = function () {
+      toggleTheme();
+      noteActivity();
+    };
+
     document.addEventListener("click", noteActivity, false);
     document.addEventListener("touchstart", noteActivity, false);
     document.addEventListener("mousemove", noteActivity, false);
+  }
+
+  function applyTheme(themeName) {
+    currentTheme = themeName === "light" ? "light" : "dark";
+    document.body.className = "theme-" + currentTheme;
+
+    if (themeButton) {
+      if (currentTheme === "dark") {
+        themeButton.textContent = "Light Mode";
+      } else {
+        themeButton.textContent = "Dark Mode";
+      }
+    }
+
+    if (baseTintLayer) {
+      baseTintLayer.setStyle({
+        fillOpacity: currentTheme === "dark" ? DARK_TINT_OPACITY : 0
+      });
+    }
+  }
+
+  function toggleTheme() {
+    if (currentTheme === "dark") {
+      applyTheme("light");
+    } else {
+      applyTheme("dark");
+    }
   }
 
   function noteActivity() {
@@ -347,6 +407,7 @@
     clearPendingLayer();
 
     incomingLayer = L.tileLayer(incomingUrl, {
+      pane: "radarPane",
       tileSize: 256,
       opacity: 0,
       zIndex: 500,
@@ -469,6 +530,7 @@
   function startApp() {
     initMap();
     initControls();
+    applyTheme(currentTheme);
     initLifecycleRefresh();
     showControls();
     loadRadarFrames(false, true);
