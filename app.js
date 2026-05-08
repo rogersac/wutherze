@@ -29,7 +29,7 @@
 
   function initMap() {
     map = L.map("map", {
-      maxZoom: 7,
+      maxZoom: 12,
       zoomControl: true,
       attributionControl: true
     });
@@ -304,6 +304,7 @@
       tileSize: 256,
       opacity: 0,
       zIndex: 500,
+      maxNativeZoom: 7,
       updateWhenIdle: true,
       keepBuffer: 1
     });
