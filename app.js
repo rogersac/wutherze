@@ -21,6 +21,7 @@
   var controlsTimer = null;
   var controlsVisible = true;
   var isLoadingRadar = false;
+  var lastRadarRefreshAt = 0;
   var timestampEl = document.getElementById("timestamp");
   var statusEl = document.getElementById("status");
   var controlsEl = document.getElementById("controls");
@@ -193,6 +194,7 @@
         }
 
         isLoadingRadar = false;
+        lastRadarRefreshAt = new Date().getTime();
 
         if (!nextFrames.length) {
           showStatus("RainViewer did not return any radar frames.", true, true);
@@ -217,6 +219,36 @@
           true
         );
       }
+    );
+  }
+
+  function refreshRadarIfDue(forceRefresh, showLoadingMessage) {
+    var now = new Date().getTime();
+
+    if (!forceRefresh && lastRadarRefreshAt && now - lastRadarRefreshAt < AUTO_REFRESH_INTERVAL) {
+      return;
+    }
+
+    loadRadarFrames(false, showLoadingMessage);
+  }
+
+  function initLifecycleRefresh() {
+    function refreshOnResume() {
+      refreshRadarIfDue(true, false);
+    }
+
+    window.addEventListener("focus", refreshOnResume, false);
+    window.addEventListener("pageshow", refreshOnResume, false);
+    window.addEventListener("online", refreshOnResume, false);
+
+    document.addEventListener(
+      "visibilitychange",
+      function () {
+        if (document.visibilityState === "visible") {
+          refreshOnResume();
+        }
+      },
+      false
     );
   }
 
@@ -437,10 +469,11 @@
   function startApp() {
     initMap();
     initControls();
+    initLifecycleRefresh();
     showControls();
     loadRadarFrames(false, true);
     autoRefreshTimer = window.setInterval(function () {
-      loadRadarFrames(false, false);
+      refreshRadarIfDue(true, false);
     }, AUTO_REFRESH_INTERVAL);
     locateUser(false);
   }
