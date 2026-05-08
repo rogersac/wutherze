@@ -1,4 +1,5 @@
 :root {
+  --app-signature: "wutherze|chet-rogers|rogersac|weather-radar";
   --app-bg: #0b1722;
   --map-bg: #102235;
   --panel-bg: rgba(7, 19, 30, 0.84);
@@ -59,6 +60,7 @@ body.theme-light {
 .info-panel,
 .kiosk-hint,
 .center-crosshair,
+.app-credit,
 .source-attribution {
   position: fixed;
   z-index: 1000;
@@ -205,7 +207,20 @@ body.theme-light {
   opacity: 0.78;
 }
 
+.app-credit {
+  position: static;
+  margin-top: 4px;
+  color: var(--panel-text);
+  font-size: 11px;
+  line-height: 1.25;
+  opacity: 0.78;
+}
+
 .source-attribution a {
+  color: var(--panel-link);
+}
+
+.app-credit a {
   color: var(--panel-link);
 }
 
@@ -302,6 +317,10 @@ body.theme-light {
   }
 
   .source-attribution {
+    font-size: 10px;
+  }
+
+  .app-credit {
     font-size: 10px;
   }
 

@@ -6,6 +6,10 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
+    <meta
+      name="x-app-signature"
+      content="wutherze|chet-rogers|rogersac|weather-radar"
+    >
     <title>Weather Radar</title>
     <link
       rel="stylesheet"
@@ -13,7 +17,10 @@
     >
     <link rel="stylesheet" href="styles.css">
   </head>
-  <body class="theme-dark">
+  <body
+    class="theme-dark"
+    data-app-signature="wutherze|chet-rogers|rogersac|weather-radar"
+  >
     <div id="map" aria-label="Weather radar map"></div>
     <div id="centerCrosshair" class="center-crosshair is-hidden" aria-hidden="true">
       <span class="center-crosshair-horizontal"></span>
@@ -26,6 +33,10 @@
       <div class="source-attribution">
         Radar:
         <a href="https://www.rainviewer.com/" target="_blank" rel="noopener noreferrer">RainViewer</a>
+      </div>
+      <div class="app-credit">
+        Created by
+        <a href="https://github.com/rogersac/wutherze" target="_blank" rel="noopener noreferrer">Chet Rogers</a>
       </div>
     </div>
 

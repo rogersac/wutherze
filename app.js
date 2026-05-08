@@ -15,6 +15,7 @@
   var CENTER_CROSSHAIR_HIDE_DELAY = 3000;
   var KIOSK_HINT_STORAGE_KEY = "weather-radar-hide-kiosk-hint";
   var KIOSK_HINT_AUTO_HIDE_DELAY = 15000;
+  var APP_SIGNATURE = "wutherze|chet-rogers|rogersac|weather-radar";
 
   var map = null;
   var baseTintLayer = null;
@@ -985,6 +986,7 @@
   }
 
   function startApp() {
+    document.documentElement.setAttribute("data-app-signature", APP_SIGNATURE);
     initMap();
     initControls();
     updateStormReportsButton();
