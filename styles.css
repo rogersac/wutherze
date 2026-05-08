@@ -184,6 +184,11 @@ body.theme-light {
   font-weight: 600;
 }
 
+.controls button.is-active {
+  background: #86c9ff;
+  color: #0d2232;
+}
+
 .controls button:active {
   background: var(--button-active-bg);
 }
@@ -212,6 +217,29 @@ body.theme-light {
 
 .leaflet-control-attribution {
   background: var(--attribution-bg);
+}
+
+.storm-report-popup {
+  color: #102235;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.storm-report-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.storm-report-meta {
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.storm-report-remarks {
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 .leaflet-bottom.leaflet-right {

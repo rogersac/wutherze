@@ -9,6 +9,7 @@
   var ANIMATION_DELAY = 900;
   var CONTROLS_HIDE_DELAY = 3000;
   var AUTO_REFRESH_INTERVAL = 120000;
+  var STORM_REPORTS_REFRESH_INTERVAL = 900000;
   var LOADING_MESSAGE = "Loading radar frames...";
   var DARK_TINT_OPACITY = 0.4;
   var KIOSK_HINT_STORAGE_KEY = "weather-radar-hide-kiosk-hint";
@@ -20,14 +21,19 @@
   var pendingLayer = null;
   var locationMarker = null;
   var locationAccuracyCircle = null;
+  var stormReportsLayer = null;
   var frames = [];
   var currentFrameIndex = -1;
   var animationTimer = null;
   var autoRefreshTimer = null;
+  var stormReportsTimer = null;
+  var stormReportsMoveTimer = null;
   var controlsTimer = null;
   var controlsVisible = true;
   var isLoadingRadar = false;
+  var isLoadingStormReports = false;
   var lastRadarRefreshAt = 0;
+  var lastStormReportsRefreshAt = 0;
   var timestampEl = document.getElementById("timestamp");
   var statusEl = document.getElementById("status");
   var controlsEl = document.getElementById("controls");
@@ -36,16 +42,19 @@
   var nextButton = document.getElementById("nextButton");
   var refreshButton = document.getElementById("refreshButton");
   var locateButton = document.getElementById("locateButton");
+  var stormReportsButton = document.getElementById("stormReportsButton");
   var themeButton = document.getElementById("themeButton");
   var kioskHintEl = document.getElementById("kioskHint");
   var kioskHintCloseButton = document.getElementById("kioskHintCloseButton");
   var kioskHintTimer = null;
   var currentTheme = "dark";
+  var stormReportsEnabled = false;
 
   function initMap() {
     var basePane = null;
     var tintPane = null;
     var radarPane = null;
+    var stormReportsPane = null;
     var locationPane = null;
 
     map = L.map("map", {
@@ -66,6 +75,9 @@
     radarPane = map.createPane("radarPane");
     radarPane.style.zIndex = 500;
 
+    stormReportsPane = map.createPane("stormReportsPane");
+    stormReportsPane.style.zIndex = 650;
+
     locationPane = map.createPane("locationPane");
     locationPane.style.zIndex = 700;
 
@@ -84,6 +96,8 @@
       interactive: false,
       pane: "tintPane"
     }).addTo(map);
+
+    stormReportsLayer = L.layerGroup().addTo(map);
   }
 
   function initControls() {
@@ -111,11 +125,19 @@
     refreshButton.onclick = function () {
       stopAnimation();
       loadRadarFrames(true, true);
+      if (stormReportsEnabled) {
+        loadStormReports(true, false);
+      }
       noteActivity();
     };
 
     locateButton.onclick = function () {
       locateUser(true);
+      noteActivity();
+    };
+
+    stormReportsButton.onclick = function () {
+      toggleStormReports();
       noteActivity();
     };
 
@@ -132,6 +154,20 @@
     document.addEventListener("click", noteActivity, false);
     document.addEventListener("touchstart", noteActivity, false);
     document.addEventListener("mousemove", noteActivity, false);
+
+    map.on("moveend", function () {
+      if (!stormReportsEnabled) {
+        return;
+      }
+
+      if (stormReportsMoveTimer) {
+        window.clearTimeout(stormReportsMoveTimer);
+      }
+
+      stormReportsMoveTimer = window.setTimeout(function () {
+        loadStormReports(false, false);
+      }, 500);
+    });
   }
 
   function shouldShowKioskHint() {
@@ -202,6 +238,283 @@
     } else {
       applyTheme("dark");
     }
+  }
+
+  function updateStormReportsButton() {
+    if (!stormReportsButton) {
+      return;
+    }
+
+    if (stormReportsEnabled) {
+      stormReportsButton.className = "is-active";
+    } else {
+      stormReportsButton.className = "";
+    }
+  }
+
+  function getStormReportStyle(reportType) {
+    if (reportType === "Tornado" || reportType === "Funnel Cloud") {
+      return { color: "#6b0010", fillColor: "#ff5c78" };
+    }
+
+    if (
+      reportType === "Tstm Wnd Dmg" ||
+      reportType === "Tstm Wnd Gst" ||
+      reportType === "Non-Tstm Wnd Dmg" ||
+      reportType === "Non-Tstm Wnd Gst"
+    ) {
+      return { color: "#7a4300", fillColor: "#ffb04f" };
+    }
+
+    if (reportType === "Hail" || reportType === "Marine Hail") {
+      return { color: "#0d5f1f", fillColor: "#7cdd7e" };
+    }
+
+    if (
+      reportType === "Flash Flood" ||
+      reportType === "Flood" ||
+      reportType === "Coastal Flood" ||
+      reportType === "Ice Jam Flooding"
+    ) {
+      return { color: "#0d4a73", fillColor: "#52b5ff" };
+    }
+
+    if (reportType === "Lightning") {
+      return { color: "#6f5600", fillColor: "#ffd84b" };
+    }
+
+    if (reportType === "Snow" || reportType === "Snow Squall" || reportType === "Blizzard") {
+      return { color: "#40506b", fillColor: "#dce7ff" };
+    }
+
+    return { color: "#5b2e88", fillColor: "#c084ff" };
+  }
+
+  function formatStormReportTime(unixTimeMs) {
+    if (!unixTimeMs) {
+      return "Unknown time";
+    }
+
+    var date = new Date(unixTimeMs);
+    var months = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+    var suffix = hours >= 12 ? "PM" : "AM";
+    var displayHours = hours % 12;
+
+    if (displayHours === 0) {
+      displayHours = 12;
+    }
+
+    if (minutes < 10) {
+      minutes = "0" + minutes;
+    }
+
+    return (
+      months[date.getMonth()] +
+      " " +
+      date.getDate() +
+      ", " +
+      displayHours +
+      ":" +
+      minutes +
+      " " +
+      suffix
+    );
+  }
+
+  function buildStormReportsUrl() {
+    var bounds = map.getBounds();
+    var west = bounds.getWest();
+    var south = bounds.getSouth();
+    var east = bounds.getEast();
+    var north = bounds.getNorth();
+
+    return (
+      "https://mapservices.weather.noaa.gov/vector/rest/services/obs/nws_local_storm_reports/MapServer/0/query" +
+      "?where=1%3D1" +
+      "&geometry=" +
+      west +
+      "," +
+      south +
+      "," +
+      east +
+      "," +
+      north +
+      "&geometryType=esriGeometryEnvelope" +
+      "&inSR=4326" +
+      "&spatialRel=esriSpatialRelIntersects" +
+      "&outFields=objectid,descript,loc_desc,state,magnitude,units,remarks,wfo,lsr_validtime" +
+      "&returnGeometry=true" +
+      "&f=geojson"
+    );
+  }
+
+  function clearStormReports() {
+    if (stormReportsLayer) {
+      stormReportsLayer.clearLayers();
+    }
+  }
+
+  function renderStormReports(data) {
+    var features = data && data.features ? data.features : [];
+    var i = 0;
+
+    clearStormReports();
+
+    for (i = 0; i < features.length; i += 1) {
+      var feature = features[i];
+      var geometry = feature.geometry;
+      var properties = feature.properties || {};
+      var reportType = properties.descript || "Storm Report";
+      var style = getStormReportStyle(reportType);
+      var latLng = null;
+      var locationLabel = "";
+      var magnitudeLabel = "";
+      var popupHtml = "";
+      var marker = null;
+
+      if (!geometry || geometry.type !== "Point" || !geometry.coordinates) {
+        continue;
+      }
+
+      latLng = [geometry.coordinates[1], geometry.coordinates[0]];
+      locationLabel = properties.loc_desc || "Unknown location";
+
+      if (properties.state) {
+        locationLabel += ", " + properties.state;
+      }
+
+      if (properties.magnitude) {
+        magnitudeLabel = properties.magnitude;
+        if (properties.units) {
+          magnitudeLabel += " " + properties.units;
+        }
+      }
+
+      popupHtml =
+        '<div class="storm-report-popup">' +
+        '<div class="storm-report-title">' +
+        reportType +
+        "</div>" +
+        '<div class="storm-report-meta">' +
+        locationLabel +
+        "</div>" +
+        '<div class="storm-report-meta">' +
+        formatStormReportTime(properties.lsr_validtime) +
+        "</div>";
+
+      if (magnitudeLabel) {
+        popupHtml += '<div class="storm-report-meta">Magnitude: ' + magnitudeLabel + "</div>";
+      }
+
+      if (properties.remarks) {
+        popupHtml += '<div class="storm-report-remarks">' + properties.remarks + "</div>";
+      }
+
+      popupHtml += "</div>";
+
+      marker = L.circleMarker(latLng, {
+        pane: "stormReportsPane",
+        radius: 6,
+        weight: 2,
+        color: style.color,
+        fillColor: style.fillColor,
+        fillOpacity: 0.9
+      });
+
+      marker.bindPopup(popupHtml, {
+        autoPan: true,
+        maxWidth: 240
+      });
+
+      stormReportsLayer.addLayer(marker);
+    }
+  }
+
+  function loadStormReports(isManualRefresh, showLoadingMessage) {
+    var requestUrl = "";
+
+    if (!stormReportsEnabled || isLoadingStormReports) {
+      return;
+    }
+
+    if (map.getZoom() < 5) {
+      clearStormReports();
+      if (isManualRefresh) {
+        showStatus("Zoom in to view storm reports.", true, false);
+      }
+      return;
+    }
+
+    isLoadingStormReports = true;
+    requestUrl = buildStormReportsUrl();
+
+    if (showLoadingMessage) {
+      showStatus("Loading storm reports...", false, false);
+    }
+
+    requestJson(
+      requestUrl,
+      function (data) {
+        isLoadingStormReports = false;
+        lastStormReportsRefreshAt = new Date().getTime();
+        renderStormReports(data);
+
+        if (isManualRefresh) {
+          showStatus("Storm reports refreshed.", false, false);
+        } else if (showLoadingMessage && statusEl.textContent === "Loading storm reports...") {
+          hideStatus();
+        }
+      },
+      function () {
+        isLoadingStormReports = false;
+        showStatus("Unable to load NOAA storm reports.", true, false);
+      }
+    );
+  }
+
+  function toggleStormReports() {
+    stormReportsEnabled = !stormReportsEnabled;
+    updateStormReportsButton();
+
+    if (!stormReportsEnabled) {
+      if (stormReportsTimer) {
+        window.clearInterval(stormReportsTimer);
+        stormReportsTimer = null;
+      }
+
+      if (stormReportsMoveTimer) {
+        window.clearTimeout(stormReportsMoveTimer);
+        stormReportsMoveTimer = null;
+      }
+
+      clearStormReports();
+      return;
+    }
+
+    loadStormReports(true, true);
+
+    if (stormReportsTimer) {
+      window.clearInterval(stormReportsTimer);
+    }
+
+    stormReportsTimer = window.setInterval(function () {
+      loadStormReports(false, false);
+    }, STORM_REPORTS_REFRESH_INTERVAL);
   }
 
   function updateLocationIndicator(latitude, longitude, accuracyMeters) {
@@ -276,7 +589,8 @@
   }
 
   function requestJson(url, onSuccess, onError) {
-    var cacheBustedUrl = url + "?t=" + new Date().getTime();
+    var separator = url.indexOf("?") === -1 ? "?" : "&";
+    var cacheBustedUrl = url + separator + "t=" + new Date().getTime();
 
     /* Use fetch when available, but keep an XHR fallback for older Safari builds. */
     if (window.fetch) {
@@ -626,6 +940,7 @@
   function startApp() {
     initMap();
     initControls();
+    updateStormReportsButton();
     applyTheme(currentTheme);
     initLifecycleRefresh();
     showControls();
