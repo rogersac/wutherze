@@ -8,6 +8,7 @@
   var RADAR_SNOW = 1;
   var ANIMATION_DELAY = 900;
   var CONTROLS_HIDE_DELAY = 3000;
+  var AUTO_REFRESH_INTERVAL = 120000;
   var LOADING_MESSAGE = "Loading radar frames...";
 
   var map = null;
@@ -16,8 +17,10 @@
   var frames = [];
   var currentFrameIndex = -1;
   var animationTimer = null;
+  var autoRefreshTimer = null;
   var controlsTimer = null;
   var controlsVisible = true;
+  var isLoadingRadar = false;
   var timestampEl = document.getElementById("timestamp");
   var statusEl = document.getElementById("status");
   var controlsEl = document.getElementById("controls");
@@ -67,7 +70,7 @@
 
     refreshButton.onclick = function () {
       stopAnimation();
-      loadRadarFrames(true);
+      loadRadarFrames(true, true);
       noteActivity();
     };
 
@@ -159,8 +162,16 @@
     request.send();
   }
 
-  function loadRadarFrames(isManualRefresh) {
-    showStatus(LOADING_MESSAGE, false, false);
+  function loadRadarFrames(isManualRefresh, showLoadingMessage) {
+    if (isLoadingRadar) {
+      return;
+    }
+
+    isLoadingRadar = true;
+
+    if (showLoadingMessage) {
+      showStatus(LOADING_MESSAGE, false, false);
+    }
 
     requestJson(
       RAINVIEWER_API_URL,
@@ -181,6 +192,8 @@
           }
         }
 
+        isLoadingRadar = false;
+
         if (!nextFrames.length) {
           showStatus("RainViewer did not return any radar frames.", true, true);
           return;
@@ -192,11 +205,12 @@
 
         if (isManualRefresh) {
           showStatus("Radar refreshed.", false, false);
-        } else if (statusEl.textContent === LOADING_MESSAGE) {
+        } else if (showLoadingMessage && statusEl.textContent === LOADING_MESSAGE) {
           hideStatus();
         }
       },
       function () {
+        isLoadingRadar = false;
         showStatus(
           "Unable to load RainViewer radar metadata. Check the network connection and try Refresh.",
           true,
@@ -424,7 +438,10 @@
     initMap();
     initControls();
     showControls();
-    loadRadarFrames(false);
+    loadRadarFrames(false, true);
+    autoRefreshTimer = window.setInterval(function () {
+      loadRadarFrames(false, false);
+    }, AUTO_REFRESH_INTERVAL);
     locateUser(false);
   }
 
