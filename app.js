@@ -12,6 +12,7 @@
   var STORM_REPORTS_REFRESH_INTERVAL = 900000;
   var LOADING_MESSAGE = "Loading radar frames...";
   var DARK_TINT_OPACITY = 0.4;
+  var CENTER_CROSSHAIR_HIDE_DELAY = 3000;
   var KIOSK_HINT_STORAGE_KEY = "weather-radar-hide-kiosk-hint";
   var KIOSK_HINT_AUTO_HIDE_DELAY = 15000;
 
@@ -29,6 +30,7 @@
   var stormReportsTimer = null;
   var stormReportsMoveTimer = null;
   var controlsTimer = null;
+  var centerCrosshairTimer = null;
   var controlsVisible = true;
   var isLoadingRadar = false;
   var isLoadingStormReports = false;
@@ -36,6 +38,7 @@
   var lastStormReportsRefreshAt = 0;
   var timestampEl = document.getElementById("timestamp");
   var statusEl = document.getElementById("status");
+  var centerCrosshairEl = document.getElementById("centerCrosshair");
   var controlsEl = document.getElementById("controls");
   var playPauseButton = document.getElementById("playPauseButton");
   var prevButton = document.getElementById("prevButton");
@@ -168,6 +171,50 @@
         loadStormReports(false, false);
       }, 500);
     });
+
+    map.on("movestart", function () {
+      showCenterCrosshair();
+    });
+
+    map.on("move", function () {
+      showCenterCrosshair();
+    });
+
+    map.on("zoomstart", function () {
+      showCenterCrosshair();
+    });
+
+    map.on("zoom", function () {
+      showCenterCrosshair();
+    });
+
+    map.on("moveend", function () {
+      scheduleCenterCrosshairHide();
+    });
+
+    map.on("zoomend", function () {
+      scheduleCenterCrosshairHide();
+    });
+  }
+
+  function showCenterCrosshair() {
+    if (centerCrosshairTimer) {
+      window.clearTimeout(centerCrosshairTimer);
+      centerCrosshairTimer = null;
+    }
+
+    centerCrosshairEl.className = "center-crosshair";
+  }
+
+  function scheduleCenterCrosshairHide() {
+    if (centerCrosshairTimer) {
+      window.clearTimeout(centerCrosshairTimer);
+    }
+
+    centerCrosshairTimer = window.setTimeout(function () {
+      centerCrosshairEl.className = "center-crosshair is-hidden";
+      centerCrosshairTimer = null;
+    }, CENTER_CROSSHAIR_HIDE_DELAY);
   }
 
   function shouldShowKioskHint() {
