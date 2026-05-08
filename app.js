@@ -11,6 +11,8 @@
   var AUTO_REFRESH_INTERVAL = 120000;
   var LOADING_MESSAGE = "Loading radar frames...";
   var DARK_TINT_OPACITY = 0.4;
+  var KIOSK_HINT_STORAGE_KEY = "weather-radar-hide-kiosk-hint";
+  var KIOSK_HINT_AUTO_HIDE_DELAY = 15000;
 
   var map = null;
   var baseTintLayer = null;
@@ -35,6 +37,9 @@
   var refreshButton = document.getElementById("refreshButton");
   var locateButton = document.getElementById("locateButton");
   var themeButton = document.getElementById("themeButton");
+  var kioskHintEl = document.getElementById("kioskHint");
+  var kioskHintCloseButton = document.getElementById("kioskHintCloseButton");
+  var kioskHintTimer = null;
   var currentTheme = "dark";
 
   function initMap() {
@@ -119,9 +124,57 @@
       noteActivity();
     };
 
+    kioskHintCloseButton.onclick = function () {
+      dismissKioskHint(true);
+      noteActivity();
+    };
+
     document.addEventListener("click", noteActivity, false);
     document.addEventListener("touchstart", noteActivity, false);
     document.addEventListener("mousemove", noteActivity, false);
+  }
+
+  function shouldShowKioskHint() {
+    try {
+      if (window.localStorage && window.localStorage.getItem(KIOSK_HINT_STORAGE_KEY) === "1") {
+        return false;
+      }
+    } catch (error) {
+      /* Ignore storage failures. */
+    }
+
+    return true;
+  }
+
+  function dismissKioskHint(rememberChoice) {
+    if (kioskHintTimer) {
+      window.clearTimeout(kioskHintTimer);
+      kioskHintTimer = null;
+    }
+
+    kioskHintEl.className = "kiosk-hint is-hidden";
+
+    if (rememberChoice) {
+      try {
+        if (window.localStorage) {
+          window.localStorage.setItem(KIOSK_HINT_STORAGE_KEY, "1");
+        }
+      } catch (error) {
+        /* Ignore storage failures. */
+      }
+    }
+  }
+
+  function showKioskHint() {
+    if (!shouldShowKioskHint()) {
+      return;
+    }
+
+    kioskHintEl.className = "kiosk-hint";
+
+    kioskHintTimer = window.setTimeout(function () {
+      dismissKioskHint(false);
+    }, KIOSK_HINT_AUTO_HIDE_DELAY);
   }
 
   function applyTheme(themeName) {
@@ -576,6 +629,7 @@
     applyTheme(currentTheme);
     initLifecycleRefresh();
     showControls();
+    showKioskHint();
     loadRadarFrames(false, true);
     autoRefreshTimer = window.setInterval(function () {
       refreshRadarIfDue(true, false);

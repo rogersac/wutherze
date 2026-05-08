@@ -53,6 +53,7 @@ body.theme-light {
 .controls,
 .noscript-message,
 .info-panel,
+.kiosk-hint,
 .source-attribution {
   position: fixed;
   z-index: 1000;
@@ -112,6 +113,49 @@ body.theme-light {
 .controls.is-hidden {
   opacity: 0;
   pointer-events: none;
+}
+
+.kiosk-hint {
+  right: 12px;
+  bottom: 92px;
+  max-width: min(320px, calc(100% - 24px));
+  padding: 12px 14px 12px;
+  border-radius: 14px;
+  background: var(--panel-bg);
+  color: var(--panel-text);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+}
+
+.kiosk-hint-title {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.kiosk-hint-body {
+  margin-top: 6px;
+  padding-right: 16px;
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.9;
+}
+
+.kiosk-hint-close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--panel-text);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.kiosk-hint-close:active {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .source-attribution {
@@ -193,6 +237,13 @@ body.theme-light {
 
   .source-attribution {
     font-size: 10px;
+  }
+
+  .kiosk-hint {
+    right: 12px;
+    left: 12px;
+    bottom: 144px;
+    max-width: none;
   }
 
   .leaflet-bottom.leaflet-right {
