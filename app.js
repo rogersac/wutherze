@@ -16,6 +16,8 @@
   var baseTintLayer = null;
   var currentLayer = null;
   var pendingLayer = null;
+  var locationMarker = null;
+  var locationAccuracyCircle = null;
   var frames = [];
   var currentFrameIndex = -1;
   var animationTimer = null;
@@ -39,6 +41,7 @@
     var basePane = null;
     var tintPane = null;
     var radarPane = null;
+    var locationPane = null;
 
     map = L.map("map", {
       maxZoom: 12,
@@ -57,6 +60,9 @@
 
     radarPane = map.createPane("radarPane");
     radarPane.style.zIndex = 500;
+
+    locationPane = map.createPane("locationPane");
+    locationPane.style.zIndex = 700;
 
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
       attribution:
@@ -142,6 +148,40 @@
       applyTheme("light");
     } else {
       applyTheme("dark");
+    }
+  }
+
+  function updateLocationIndicator(latitude, longitude, accuracyMeters) {
+    var latLng = [latitude, longitude];
+    var radius = accuracyMeters || 500;
+
+    if (!locationMarker) {
+      locationMarker = L.circleMarker(latLng, {
+        pane: "locationPane",
+        radius: 7,
+        weight: 3,
+        color: "#ffffff",
+        fillColor: "#2f9bff",
+        fillOpacity: 0.95
+      }).addTo(map);
+    } else {
+      locationMarker.setLatLng(latLng);
+    }
+
+    if (!locationAccuracyCircle) {
+      locationAccuracyCircle = L.circle(latLng, {
+        pane: "locationPane",
+        stroke: true,
+        weight: 1,
+        color: "#7fc3ff",
+        opacity: 0.75,
+        fillColor: "#4aa8ff",
+        fillOpacity: 0.12,
+        radius: radius
+      }).addTo(map);
+    } else {
+      locationAccuracyCircle.setLatLng(latLng);
+      locationAccuracyCircle.setRadius(radius);
     }
   }
 
@@ -506,6 +546,9 @@
       function (position) {
         var latitude = position.coords.latitude;
         var longitude = position.coords.longitude;
+        var accuracy = position.coords.accuracy || 500;
+
+        updateLocationIndicator(latitude, longitude, accuracy);
         map.setView([latitude, longitude], 8);
 
         if (isManualRequest) {
