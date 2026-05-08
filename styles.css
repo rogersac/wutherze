@@ -52,21 +52,28 @@ body.theme-light {
 .status,
 .controls,
 .noscript-message,
+.info-panel,
 .source-attribution {
   position: fixed;
   z-index: 1000;
 }
 
-.timestamp {
+.info-panel {
   top: 12px;
-  left: 12px;
-  padding: 10px 14px;
+  right: 12px;
+  max-width: min(280px, calc(100% - 24px));
+  padding: 10px 14px 8px;
   border-radius: 12px;
   background: var(--panel-bg);
   color: var(--panel-text);
+  text-align: left;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.timestamp {
+  position: static;
   font-size: 16px;
   line-height: 1.2;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
 }
 
 .status {
@@ -108,14 +115,12 @@ body.theme-light {
 }
 
 .source-attribution {
-  top: 12px;
-  right: 12px;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: var(--panel-bg);
+  position: static;
+  margin-top: 4px;
   color: var(--panel-text);
-  font-size: 13px;
-  line-height: 1.2;
+  font-size: 11px;
+  line-height: 1.25;
+  opacity: 0.78;
 }
 
 .source-attribution a {
@@ -180,9 +185,14 @@ body.theme-light {
     font-size: 17px;
   }
 
+  .info-panel,
   .timestamp,
   .status {
     font-size: 15px;
+  }
+
+  .source-attribution {
+    font-size: 10px;
   }
 
   .leaflet-bottom.leaflet-right {
