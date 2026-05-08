@@ -9,7 +9,7 @@ The app is intentionally simple:
 - No framework
 - No npm dependencies
 
-You can host it on any static web host, including GitHub Pages or Cloudflare Pages.
+You can host it on any static web host, or loaded from [https://rogersac.github.io/wutherze/](https://rogersac.github.io/wutherze/).
 
 ## What the App Does
 
